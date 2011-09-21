@@ -1,4 +1,6 @@
 class window.ReversiServer
+
+class window.ReversiEngine
   START_PIECES:
     black: [[3, 4], [4, 3]]
     white: [[3, 3], [4, 4]]
@@ -66,7 +68,7 @@ class window.ReversiServer
   init: ->
     @finished = false
     @player_turn = null
-    @pieces = _.clone(ReversiServer::START_PIECES)
+    @pieces = _.clone(ReversiEngine::START_PIECES)
     @nextTurn()
     @getCurrentState()
 
@@ -187,7 +189,7 @@ class ReversiClient
     @events.bind(name, _.bind(callback, this))
 
 $ ->
-  window.server = new ReversiServer()
+  window.server = new ReversiEngine()
   window.client = new ReversiClient(server, "#game_container", "#game_info", 400, 400)
   client.start()
   $("#game_button").html("Abort Game")
