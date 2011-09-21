@@ -48,28 +48,18 @@ class window.ReversiServer
 
   validMovesForPlayer: (player) ->
     pos2player = @getPosition2Player(player)
-
     xs = _([0...8]).map (x) =>
       _([0...8]).map (y) =>
         if not pos2player[[x, y]]
           _(@AXIS_INCREMENTS).map ([dx, dy]) =>
-            @traverseBoard(player, [x, dx], [y, dy], pos2player, (cs, [x, y]) -> {xy: [x, y]})
-
-    _(xs).chain().flatten().compact().pluck("xy").value()
+            @traverseBoard(player, [x, dx], [y, dy], pos2player, (cs, [x, y]) -> [x, y])
+    _(xs).chain().flatten1().flatten1().compact().value()
 
   flippedPiecesOnMove: (player, [x, y]) ->
     pos2player = @getPosition2Player(player)
-
     xs = _(@AXIS_INCREMENTS).map ([dx, dy]) =>
-      @traverseBoard(player, [x, dx], [y, dy], pos2player, (cs, [x, y]) -> {cs: cs})
-
-    # Manual Array#uniq because equal arrays are in fact not equal (===) in JS
-    output = []
-    _(xs).chain().flatten().compact().pluck("cs").each (cs) ->
-      _(cs).each ([x, y]) ->
-        if not _.contains(output, [x, y])
-          output.push([x, y])
-    output
+      @traverseBoard(player, [x, dx], [y, dy], pos2player, (cs, [x, y]) -> cs)
+    _(xs).chain().flatten1().compact().uniqWith(_.isEqual).value()
 
   ## Public methods
 
@@ -191,6 +181,7 @@ class ReversiClient
     @state = "idle"
     @info_container.html("")
     @paper.clear()
+    @paper_set = @paper.set()
 
   bind: (name, callback) ->
     @events.bind(name, _.bind(callback, this))

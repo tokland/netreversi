@@ -59,6 +59,23 @@ _.mixin({
     return output;
   },
 
+  /* Like _.uniq but using a custom comparison function */
+  uniqWith: function(list, compare_function, context) {
+    var output = [];
+    _.each(list, function(item) {
+      if (!_.any(output, function(x) { return compare_function.call(context, item, x); }))
+        output.push(item);
+    });
+    return output;
+  },
+
+  /* Return a one-level flattened version of an array. */
+  flatten1: function(array) {
+    return _.reduce(array, function(memo, value) {
+      return memo.concat(value);
+    }, []);
+  },
+
   /* Inspect object and print it to the JS console */
   inspect: function(obj) {
     console.log(JSON.stringify(obj, null));
