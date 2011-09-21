@@ -19,6 +19,7 @@ _.mixin({
     }, {});
   },
 
+  /* take elements from list while callback condition is met */
   takeWhile: function(list, callback, context) {
     var xs = [];
     _.detect(list, function(item, index, list) {
@@ -30,18 +31,21 @@ _.mixin({
     return xs;
   },
 
-  repeat: function(item, times) {
+  /* Repeat item n timtes */
+  repeat: function(item, n) {
     var output = [];
-    for(var i=0; i < times; i++) {
+    for(var i=0; i < n; i++) {
       output.push(item);
     }
     return output;
   },
 
-  containsObject: function(array_of_arrays, array) {
-    return _(array_of_arrays).any(function(a) { return _(a).isEqual(array) });
+  /* Return true if array_of_objects contain an object (deep comparison) */
+  containsObject: function(array_of_objects, obj) {
+    return _(array_of_objects).any(function(o) { return _(o).isEqual(obj) });
   },
 
+  /* Return the first true element returned by the callback block (map + first) */
   mapDetect: function(list, callback, context) {
     var output;
     _.detect(list, function(item, index, list) {
@@ -55,7 +59,7 @@ _.mixin({
     return output;
   },
 
-  /* Inspect object and print to console */
+  /* Inspect object and print it to the JS console */
   inspect: function(obj) {
     console.log(JSON.stringify(obj, null));
   }
