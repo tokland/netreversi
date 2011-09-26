@@ -1,9 +1,8 @@
-underscore_methods = [
+_([
   "map", "merge", "zip", "clone", "takeWhile", "last", "reject"
   "defaults", "containsObject", "isNotEmpty", "mash", "repeat"
   "flatten", "flatten1", "bind", "isEqual", "isEmpty", "uniqWith"
-]
-_.extend(window, _.mash(underscore_methods, (m) -> [m, _[m]]))
+]).each((method) -> this[method] = _[method])
 
 class ReversiEngine
   START_PIECES:
@@ -27,6 +26,7 @@ class ReversiEngine
       player_turn = @getOtherPlayer(player_turn)
       if not @canPlayerMove(player_turn)
         @finished = true
+        player_turn = null
     @player_turn = player_turn
 
   canPlayerMove: (player) ->
@@ -36,9 +36,9 @@ class ReversiEngine
     if player == "black" then "white" else "black"
 
   getPositionToPlayer: (pieces, player) ->
-    white = mash(pieces.white, (pos) -> [pos, "white"])
-    black = mash(pieces.black, (pos) -> [pos, "black"])
-    merge(white, black)
+    black = mash([pos, "black"] for pos in pieces.black)
+    white = mash([pos, "white"] for pos in pieces.white)
+    merge(black, white)
 
   traverseSquares: (player, [x, y], pos2player) ->
     other_player = @getOtherPlayer(player)
@@ -46,12 +46,13 @@ class ReversiEngine
       xs = (if dx == 0 then repeat(x, 8) else [x+dx..(if dx > 0 then 7 else 0)])
       ys = (if dy == 0 then repeat(y, 8) else [y+dy..(if dy > 0 then 7 else 0)])
       if pos2player[[xs[0], ys[0]]] == other_player
-        cs = takeWhile(zip(xs, ys), ([x2, y2]) -> pos2player[[x2, y2]] == other_player)
+        cs = takeWhile(zip(xs, ys), (pos) -> pos2player[pos] == other_player)
         [last_x, last_y] = last(cs)
         if pos2player[[last_x+dx, last_y+dy]] == player
           {squares: cs, pos: [x, y]}
 
   validMovesForPlayer: (pieces, player) ->
+    return [] unless player
     pos2player = @getPositionToPlayer(@pieces, player)
     squares = for x in [0...8]
       for y in [0...8]
@@ -60,6 +61,7 @@ class ReversiEngine
     _(squares).chain().flatten1().flatten1().compact().pluck("pos").value()
 
   flippedPiecesOnMove: (pieces, player, [x, y]) ->
+    return [] unless player
     pos2player = @getPositionToPlayer(pieces, player)
     squares = @traverseSquares(player, [x, y], pos2player)
     _(squares).chain().compact().pluck("squares").flatten1().uniqWith(isEqual).value()
@@ -79,18 +81,18 @@ class ReversiEngine
   getCurrentState: ->
     state =
       pieces: @pieces
-      player_turn: (if @finished then false else @player_turn)
-      player_moves: (if @finished then [] else @validMovesForPlayer(@pieces, @player_turn))
+      player_turn: @player_turn
+      player_moves: @validMovesForPlayer(@pieces, @player_turn)
 
   move: ([x, y]) ->
     flipped_pieces = @flippedPiecesOnMove(@pieces, @player_turn, [x, y])
     return false if isEmpty(flipped_pieces)
     other_player = @getOtherPlayer(@player_turn)
-    @pieces[other_player] = reject @pieces[other_player], ([x2, y2]) ->
-      _(flipped_pieces).containsObject([x2, y2])
+    @pieces[other_player] = 
+      (p for p in @pieces[other_player] when not _(flipped_pieces).containsObject(p))
     @pieces[@player_turn] = @pieces[@player_turn].concat([[x, y]], flipped_pieces)
     @processNextTurn()
-    @getCurrentState()
+    merge(@getCurrentState(), {flipped_pieces: flipped_pieces})
 
 
 class ReversiSocketIOServer extends ReversiEngine
@@ -123,16 +125,8 @@ class ReversiClient
     @events = $(new Object())
     @paper_set = @paper.set()
 
-  draw: (state) ->
-    @paper_set.remove()
-    @paper_set = @paper.set()
-    squares = flatten(@draw_board(state.player_turn, state.player_moves))
-    @paper_set.push.apply(@paper_set, squares)
-    for player in ["black", "white"]
-      for [x, y] in state.pieces[player]
-        piece = @draw_piece(player, [x, y])
-        @paper_set.push(piece)
-    @updateGameInfo(state)
+  getOtherPlayer: (player) ->
+    if player == "black" then "white" else "black"
 
   update: (state) ->
     @draw(state)
@@ -140,6 +134,20 @@ class ReversiClient
     if not state.player_turn
       @events.trigger("finished")
       @state = "idle"
+
+  draw: (state) ->
+    @paper_set.remove()
+    @paper_set = @paper.set()
+    squares = flatten(@draw_board(state.player_turn, state.player_moves))    
+    @paper_set.push.apply(@paper_set, squares)
+    
+    for player in ["black", "white"]
+      for pos in state.pieces[player]
+        is_flipped = _(state.flipped_pieces || []).containsObject(pos)
+        piece = @draw_piece(player, pos, is_flipped)
+        @paper_set.push(piece)
+      
+    @updateGameInfo(state)
 
   draw_board: (current_player, hoverable_squares) ->
     step_x = @width / @size
@@ -161,11 +169,20 @@ class ReversiClient
               @update(@server.move([x, y]))
         rect
 
-  draw_piece: (player, [x, y]) ->
+  draw_piece: (player, [x, y], flip_effect) ->
     [step_x, step_y] = [@width / @size, @height / @size]
     [paper_x, paper_y] = [(x * step_x) + (step_x/2), (y * step_y) + (step_y/2)]
-    color = @colors.players[player]
-    @paper.circle(paper_x, paper_y, (step_x/2) * 0.8).attr(fill: color, stroke: color)
+    [rx, ry] = [(step_x/2) * 0.8, (step_y/2) * 0.8]
+    other_player = @getOtherPlayer(player)
+    color = (if flip_effect then @colors.players[other_player] else @colors.players[player])
+    piece = @paper.ellipse(paper_x, paper_y, rx, ry)
+    piece.attr(fill: color, "stroke-opacity": 0)
+    if flip_effect 
+      attr = (if player == "white" then "rx" else "ry")
+      piece.animate mash([[attr, 0]]), 200, =>
+        piece.attr(fill: @colors.players[player])
+        piece.animate mash([[attr, rx]]), 200
+    piece
 
   updateGameInfo: (state) ->
     state = @server.getCurrentState()

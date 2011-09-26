@@ -1,7 +1,7 @@
 (function() {
 var node = (typeof module == "object");
 if (node) {
-  _ = require('./underscore.js');
+  _ = require('./underscore');
 }
 
 _.mixin({
@@ -40,7 +40,7 @@ _.mixin({
     return xs;
   },
 
-  /* Repeat item n timtes */
+  /* Repeat item n times */
   repeat: function(item, n) {
     var output = [];
     for(var i=0; i < n; i++) {
@@ -62,8 +62,9 @@ _.mixin({
       if (res) {
         output = res;
         return true;
+      } else {
+        return false;
       }
-      return false;
     });
     return output;
   },
@@ -72,8 +73,9 @@ _.mixin({
   uniqWith: function(list, compare_function, context) {
     var output = [];
     _.each(list, function(item) {
-      if (!_.any(output, function(x) { return compare_function.call(context, item, x); }))
+      if (!_.any(output, function(x) { return compare_function.call(context, item, x); })) {
         output.push(item);
+      }
     });
     return output;
   },
