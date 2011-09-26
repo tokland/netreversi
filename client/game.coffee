@@ -143,8 +143,8 @@ class ReversiClient
     
     for player in ["black", "white"]
       for pos in state.pieces[player]
-        is_flipped = _(state.flipped_pieces || []).containsObject(pos)
-        piece = @draw_piece(player, pos, is_flipped)
+        was_flipped = _(state.flipped_pieces || []).containsObject(pos)
+        piece = @draw_piece(player, pos, was_flipped)
         @paper_set.push(piece)
       
     @updateGameInfo(state)
@@ -157,9 +157,9 @@ class ReversiClient
         with_move = _(hoverable_squares).containsObject([x, y])
         rect = @paper.rect(x * step_x, y * step_y, @width / @size, @height / @size)
         square_with_move_color = @colors.square_with_move[current_player]
-        fill = if with_move then square_with_move_color else @colors.square
-        rect.attr(fill: fill, stroke: @colors.square_lines)
+        rect.attr(fill: @colors.square, stroke: @colors.square_lines)
         if with_move
+          rect.animate(fill: square_with_move_color, stroke: @colors.square_lines, 400)
           do (rect, x, y) =>
             rect.mouseover =>
               rect.attr(fill: @colors.square_hovered)
@@ -176,7 +176,7 @@ class ReversiClient
     other_player = @getOtherPlayer(player)
     color = (if flip_effect then @colors.players[other_player] else @colors.players[player])
     piece = @paper.ellipse(paper_x, paper_y, rx, ry)
-    piece.attr(fill: color, "stroke-opacity": 0)
+    piece.attr("fill": color, "stroke-opacity": 0)
     if flip_effect 
       attr = (if player == "white" then "rx" else "ry")
       piece.animate mash([[attr, 0]]), 200, =>
@@ -189,8 +189,8 @@ class ReversiClient
     turn_info = (if state.player_turn then "Turn: <b>#{state.player_turn}</b>" else "Finished")
     @info_container.html("""
       #{turn_info}.
-      Player black: <b>#{state.pieces.black.length}</b>,
-      Player white: <b>#{state.pieces.white.length}</b>""")
+      Black: <b>#{state.pieces.black.length}</b> -
+      White: <b>#{state.pieces.white.length}</b>""")
 
   start: ->
     @state = "playing"
