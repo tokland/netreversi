@@ -1,7 +1,7 @@
 (function() {
 var node = (typeof module == "object");
-if (node) {
-  _ = require('./underscore');
+if (node && !this._) {
+  this._ = require('./underscore');
 }
 
 _.mixin({
