@@ -1,12 +1,14 @@
 if typeof(module) != "undefined"
-  this._ = require('./underscore')
-  require('./underscore_extensions')  
+  require('./underscore')
+  require('./underscore_extensions')
+else
+  exports = this  
 
 _(["map", "merge", "zip", "takeWhile", "last", "reject", "mash", 
    "repeat", "flatten", "flatten1", "isEqual", "isEmpty", "uniqWith",
 ]).each((method) -> this[method] = _[method])
 
-class this.ReversiEngine
+class exports.ReversiEngine
   START_PIECES:
     black: [[3, 4], [4, 3]]
     white: [[3, 3], [4, 4]]
@@ -18,7 +20,7 @@ class this.ReversiEngine
   ]
 
   constructor: (options) ->
-    @options = _(options).defaults({})
+    @options = _(options or {}).defaults({})
     @init()
 
   processNextTurn: ->
@@ -73,7 +75,7 @@ class this.ReversiEngine
   init: ->
     @finished = false
     @player_turn = null
-    @pieces = _(ReversiEngine::START_PIECES).clone()
+    @pieces = _(@options.start_pieces or ReversiEngine::START_PIECES).clone()
     @processNextTurn()
     @getCurrentState()
 
@@ -100,7 +102,7 @@ class this.ReversiEngine
 class ReversiSocketIOServer
   # use socket.io
 
-class this.ReversiClient
+class exports.ReversiClient
   SIZE: 8
   COLORS:
     square: "#090"
@@ -208,6 +210,3 @@ class this.ReversiClient
 
   bind: (name, callback) ->
     @events.bind(name, _.bind(callback, this))
-    
-#engine = new this.ReversiEngine()
-#console.log engine.player_turn
