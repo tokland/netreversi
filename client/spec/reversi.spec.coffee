@@ -2,9 +2,7 @@ should = require 'should'
 helper = require 'helper'
 require 'underscore'
 require 'underscore_extensions'
-
-game = require '../reversi'
-console.log 1, game.ReversiEngine
+game = require 'reversi'
 
 describe "ReversiEngine", ->
   describe "init", ->
@@ -37,65 +35,70 @@ describe "ReversiEngine", ->
 
     it "should skip player with turn if she cannot move", ->      
       engine = helper.createEngine("""
-        --------
-        --------
-        --------
-        ---XXOOX
-        --------
-        --------
-        --------
-        --------""")
+         01234567
+        0--------
+        1--------
+        2--------
+        3---XXOOX
+        4--------
+        5--------
+        6--------
+        7--------""")
       engine.player_turn.should.equal "white"
 
   describe "canPlayerMove", ->
     engine1 = helper.createEngine("""
-      --------
-      --------
-      --------
-      ---XO---
-      ---OX---
-      --------
-      --------
-      --------""")
+       01234567
+      0--------
+      1--------
+      2--------
+      3---XO---
+      4---OX---
+      5--------
+      6--------
+      7--------""")
     engine1.canPlayerMove("black").should.be.true
     engine1.canPlayerMove("white").should.be.true
 
     engine2 = helper.createEngine("""
-      -----XXX
-      --------
-      --OOOOXO
-      --------
-      ----XXX-
-      --------
-      --------
-      --------""")
+       01234567
+      0-----XXX
+      1--------
+      2--OOOOXO
+      3--------
+      4----XXX-
+      5--------
+      6--------
+      7--------""")
     engine2.canPlayerMove("black").should.be.true
     engine2.canPlayerMove("white").should.be.false    
     
   describe "validMovesForPlayer", ->
     engine1 = helper.createEngine("""
-      --------
-      --------
-      --------
-      ---XO---
-      ---OX---
-      --------
-      --------
-      --------""")
+       01234567
+      0--------
+      1--------
+      2--------
+      3---XO---
+      4---OX---
+      5--------
+      6--------
+      7--------""")
     engine1.validMovesForPlayer(engine1.pieces, "black").should.eql(
       [[2, 4], [3, 5], [4, 2], [5, 3]])
     engine1.validMovesForPlayer(engine1.pieces, "white").should.eql(
       [[2, 3], [3, 2], [4, 5], [5, 4]])
       
     engine2 = helper.createEngine("""
-      --------
-      --------
-      --------
-      ---XOO-O
-      ---O----
-      ---X----
-      ----O---
-      --------""")
+       01234567
+      0--------
+      1--------
+      2--------
+      3---XOO-O
+      4---O----
+      5---X----
+      6----O---
+      7--------""")
     engine2.validMovesForPlayer(engine2.pieces, "black").
       should.eql([[5, 7], [6, 3]])
     engine2.validMovesForPlayer(engine2.pieces, "white").

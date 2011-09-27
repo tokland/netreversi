@@ -1,6 +1,6 @@
 if typeof(module) != "undefined"
-  require('./underscore')
-  require('./underscore_extensions')
+  require 'underscore'
+  require 'underscore_extensions'
 else
   exports = this  
 
@@ -124,7 +124,7 @@ class exports.ReversiClient
     @width = width
     @height = height
     @paper = Raphael(@container.get(0), width, height)
-    @options = _(options).defaults({})
+    @options = _(options or {}).defaults({})
     @state = "idle"
     @events = $(new Object())
     @paper_set = @paper.set()

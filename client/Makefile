@@ -1,9 +1,9 @@
-build: game reversi
+build: game.js reversi.js
 
-game: game.js
-	coffee -c -b game.coffee
+game.js: game.coffee
+	coffee -c game.coffee
 
-reversi: reversi.js
+reversi.js: reversi.coffee
 	coffee -c -b reversi.coffee
 
 test: build
