@@ -183,9 +183,9 @@ class exports.ReversiClient
     piece.attr("fill": color, "stroke-opacity": 0)
     if flip_effect 
       attr = (if player == "white" then "rx" else "ry")
-      piece.animate mash([[attr, 0]]), 200, =>
+      piece.animate mash([[attr, 0]]), 250, =>
         piece.attr(fill: @colors.players[player])
-        piece.animate mash([[attr, rx]]), 200, "backOut"
+        piece.animate(mash([[attr, rx]]), 250, "backOut")
     piece
 
   updateGameInfo: (state) ->
