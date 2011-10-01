@@ -8,7 +8,7 @@ describe "ReversiEngine", ->
   describe "init", ->
     it "starts with black turn", ->
       engine = new game.ReversiEngine
-      engine.player_turn.should.equal "black"
+      engine.getCurrentState().player_turn.should.equal "black"
    
     it "restarts pieces on board", ->
       engine = new game.ReversiEngine      
@@ -26,13 +26,11 @@ describe "ReversiEngine", ->
       engine.getOtherPlayer("white").should.equal "black"
 
   describe "processNextTurn", ->
-    it "turns black turn to white", ->
+    it "turns black to white", ->
       engine = new game.ReversiEngine
-      engine.player_turn.should.equal "black"
-      engine.processNextTurn()
-      engine.player_turn.should.equal "white"
-      engine.processNextTurn()
-      engine.player_turn.should.equal "black"
+      state = engine.getCurrentState()
+      state.player_turn.should.equal "black"
+      engine.processNextTurn(state).player_turn.should.equal "white"
 
     it "should skip player with turn if she cannot move", ->      
       engine = helper.createEngine("""
@@ -45,7 +43,7 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine.player_turn.should.equal "white"
+      engine.getCurrentState().player_turn.should.equal "white"
 
   describe "canPlayerMove", ->
     it -> 
@@ -59,8 +57,8 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine1.canPlayerMove("black").should.be.true
-      engine1.canPlayerMove("white").should.be.true
+      engine1.canPlayerMove(engine1.getCurrentState().pieces, "black").should.be.true
+      engine1.canPlayerMove(engine1.getCurrentState().pieces, "white").should.be.true
 
       engine2 = helper.createEngine("""
          01234567
@@ -72,8 +70,8 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine2.canPlayerMove("black").should.be.true
-      engine2.canPlayerMove("white").should.be.false    
+      engine2.canPlayerMove(engine1.getCurrentState().pieces, "black").should.be.true
+      engine2.canPlayerMove(engine1.getCurrentState().pieces, "white").should.be.false    
     
   describe "validMovesForPlayer", ->
     it -> 
@@ -87,9 +85,9 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine1.validMovesForPlayer(engine1.pieces, "black").should.eql(
+      engine1.validMovesForPlayer(engine1.getCurrentState().pieces, "black").should.eql(
         [[2, 4], [3, 5], [4, 2], [5, 3]])
-      engine1.validMovesForPlayer(engine1.pieces, "white").should.eql(
+      engine1.validMovesForPlayer(engine1.getCurrentState().pieces, "white").should.eql(
         [[2, 3], [3, 2], [4, 5], [5, 4]])
         
       engine2 = helper.createEngine("""
@@ -102,9 +100,9 @@ describe "ReversiEngine", ->
         5---X----
         6----O---
         7--------""")
-      engine2.validMovesForPlayer(engine2.pieces, "black").
+      engine2.validMovesForPlayer(engine2.getCurrentState().pieces, "black").
         should.eql([[5, 7], [6, 3]])
-      engine2.validMovesForPlayer(engine2.pieces, "white").
+      engine2.validMovesForPlayer(engine2.getCurrentState().pieces, "white").
         should.eql([[2, 3], [2, 4], [3, 2], [3, 6]])
 
   describe "flippedPiecesOnMove", ->
@@ -155,6 +153,7 @@ describe "ReversiEngine", ->
           black: [[1, 1], [1, 2]]
           white: [[2, 2]]
         player_turn: "black"
+        finished: false
         player_moves: [[3, 2], [3, 3]]
       
   describe "move", ->

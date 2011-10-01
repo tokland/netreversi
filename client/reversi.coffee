@@ -19,22 +19,24 @@ class exports.ReversiEngine
     [+1, +1], [+1, -1], [-1, +1], [-1, -1] # 4-diagonals
   ]
 
-  constructor: (options) ->
-    @options = _(options or {}).defaults({})
+  constructor: (options = {}) ->
+    @options = _(options).defaults({})
     @init()
 
-  processNextTurn: ->
-    return if @finished
-    player_turn = @getOtherPlayer(@player_turn)
-    if not @canPlayerMove(player_turn)
-      player_turn = @getOtherPlayer(player_turn)
-      if not @canPlayerMove(player_turn)
-        @finished = true
-        player_turn = null
-    @player_turn = player_turn
+  processNextTurn: (state) ->
+    player_turn = @getOtherPlayer(state.player_turn)
+    next_player_turn = if @canPlayerMove(state.pieces, player_turn)
+      player_turn
+    else
+      player_turn2 = @getOtherPlayer(player_turn)
+      if @canPlayerMove(state.pieces, player_turn2) then player_turn2 else null
+    _(state).merge
+      player_turn: next_player_turn
+      finished: !next_player_turn
+      player_moves: @validMovesForPlayer(state.pieces, next_player_turn)  
 
-  canPlayerMove: (player) ->
-    _(@validMovesForPlayer(@pieces, player)).isNotEmpty()
+  canPlayerMove: (pieces, player) ->
+    _(@validMovesForPlayer(pieces, player)).isNotEmpty()
 
   getOtherPlayer: (player) ->
     if player == "black" then "white" else "black"
@@ -57,7 +59,7 @@ class exports.ReversiEngine
 
   validMovesForPlayer: (pieces, player) ->
     return [] unless player
-    pos2player = @getPositionToPlayer(@pieces, player)
+    pos2player = @getPositionToPlayer(pieces, player)
     squares = for x in [0...8]
       for y in [0...8]
         if not pos2player[[x, y]]
@@ -73,31 +75,30 @@ class exports.ReversiEngine
   ## Public methods
 
   init: ->
-    @finished = false
-    @player_turn = null
-    @pieces = _(@options.start_pieces or ReversiEngine::START_PIECES).clone()
-    @processNextTurn()
-    @getCurrentState()
-
-  abort: ->
-    @init()
+    @setNewState(@processNextTurn({
+      pieces: _(@options.start_pieces or ReversiEngine::START_PIECES).clone()
+      player_turn: null
+    }))
 
   getCurrentState: ->
-    state =
-      pieces: @pieces
-      player_turn: @player_turn
-      player_moves: @validMovesForPlayer(@pieces, @player_turn)
+    @state
 
-  move: ([x, y]) ->
-    flipped_pieces = @flippedPiecesOnMove(@pieces, @player_turn, [x, y])
+  setNewState: (new_state) ->
+    @state = new_state
+    
+  move: (pos) ->
+    player = @state.player_turn
+    other_player = @getOtherPlayer(player)
+    flipped_pieces = @flippedPiecesOnMove(@state.pieces, player, pos)
     return false if isEmpty(flipped_pieces)
-    other_player = @getOtherPlayer(@player_turn)
-    @pieces[other_player] = 
-      (p for p in @pieces[other_player] when not _(flipped_pieces).containsObject(p))
-    @pieces[@player_turn] = @pieces[@player_turn].concat([[x, y]], flipped_pieces)
-    @processNextTurn()
-    merge(@getCurrentState(), {flipped_pieces: flipped_pieces})
-
+    pieces_player = @state.pieces[@state.player_turn].concat([pos], flipped_pieces)
+    pieces_other_player = 
+      (p for p in @state.pieces[other_player] when not _(flipped_pieces).containsObject(p))
+    new_pieces = [[player, pieces_player], [other_player, pieces_other_player]]
+    @setNewState(@processNextTurn(_(@state).merge({
+      pieces: mash(new_pieces)
+      flipped_pieces: flipped_pieces
+    })))
 
 class ReversiSocketIOServer
   # use socket.io
@@ -202,7 +203,7 @@ class exports.ReversiClient
     @draw(server_state)
 
   abort: ->
-    @server.abort()
+    @server.init()
     @state = "idle"
     @info_container.html("")
     @paper.clear()
