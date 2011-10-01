@@ -1,14 +1,15 @@
-if typeof(module) != "undefined"
-  require 'underscore'
-  require 'underscore_extensions'
+exports = if module?
+  _ = require 'underscore_extensions'
+  module.exports
 else
-  exports = this  
+  this
 
 _(["map", "merge", "zip", "takeWhile", "last", "reject", "mash", 
-   "repeat", "flatten", "flatten1", "isEqual", "isEmpty", "uniqWith",
-]).each((method) -> this[method] = _[method])
+   "repeat", "flatten", "flatten1", "isEqual", "isEmpty",
+]).each (method) -> this[method] = _[method]
 
 class exports.ReversiEngine
+  SIZE: 8
   START_PIECES:
     black: [[3, 4], [4, 3]]
     white: [[3, 3], [4, 4]]
@@ -20,7 +21,9 @@ class exports.ReversiEngine
   ]
 
   constructor: (options = {}) ->
-    @options = _(options).defaults({})
+    @options = _(options).defaults
+      size: @SIZE
+      start_pieces: @START_PIECES
     @init()
 
   processNextTurn: (state) ->
@@ -32,7 +35,6 @@ class exports.ReversiEngine
       if @canPlayerMove(state.pieces, player_turn2) then player_turn2 else null
     _(state).merge
       player_turn: next_player_turn
-      finished: !next_player_turn
       player_moves: @validMovesForPlayer(state.pieces, next_player_turn)  
 
   canPlayerMove: (pieces, player) ->
@@ -48,9 +50,10 @@ class exports.ReversiEngine
 
   traverseSquares: (player, [x, y], pos2player) ->
     other_player = @getOtherPlayer(player)
+    size = @options.size
     for [dx, dy] in @AXIS_INCREMENTS
-      xs = (if dx == 0 then repeat(x, 8) else [x+dx..(if dx > 0 then 7 else 0)])
-      ys = (if dy == 0 then repeat(y, 8) else [y+dy..(if dy > 0 then 7 else 0)])
+      xs = (if dx == 0 then repeat(x, size) else [x+dx..(if dx > 0 then size-1 else 0)])
+      ys = (if dy == 0 then repeat(y, size) else [y+dy..(if dy > 0 then size-1 else 0)])
       if pos2player[[xs[0], ys[0]]] == other_player
         cs = takeWhile(zip(xs, ys), (pos) -> pos2player[pos] == other_player)
         [last_x, last_y] = last(cs)
@@ -66,25 +69,25 @@ class exports.ReversiEngine
           @traverseSquares(player, [x, y], pos2player)
     _(squares).chain().flatten1().flatten1().compact().pluck("pos").value()
 
-  flippedPiecesOnMove: (pieces, player, [x, y]) ->
+  flippedPiecesOnMove: (pieces, player, pos) ->
     return [] unless player
     pos2player = @getPositionToPlayer(pieces, player)
-    squares = @traverseSquares(player, [x, y], pos2player)
+    squares = @traverseSquares(player, pos, pos2player)
     _(squares).chain().compact().pluck("squares").flatten1().uniqWith(isEqual).value()
 
-  ## Public methods
+  setNewState: (new_state) ->
+    @state = new_state
 
-  init: ->
-    @setNewState(@processNextTurn({
-      pieces: _(@options.start_pieces or ReversiEngine::START_PIECES).clone()
-      player_turn: null
-    }))
+  ## Public methods
 
   getCurrentState: ->
     @state
 
-  setNewState: (new_state) ->
-    @state = new_state
+  init: ->
+    @setNewState(@processNextTurn({
+      pieces: _(@options.start_pieces).clone()
+      player_turn: null
+    }))
     
   move: (pos) ->
     player = @state.player_turn
@@ -94,11 +97,9 @@ class exports.ReversiEngine
     pieces_player = @state.pieces[@state.player_turn].concat([pos], flipped_pieces)
     pieces_other_player = 
       (p for p in @state.pieces[other_player] when not _(flipped_pieces).containsObject(p))
-    new_pieces = [[player, pieces_player], [other_player, pieces_other_player]]
-    @setNewState(@processNextTurn(_(@state).merge({
-      pieces: mash(new_pieces)
-      flipped_pieces: flipped_pieces
-    })))
+    new_pieces = mash([[player, pieces_player], [other_player, pieces_other_player]])
+    new_state = @setNewState(@processNextTurn(_(@state).merge(pieces: new_pieces)))
+    {new_state: new_state, flipped_pieces: flipped_pieces}
 
 class ReversiSocketIOServer
   # use socket.io
@@ -116,16 +117,14 @@ class exports.ReversiClient
       black: "#000"
       white: "#FFF"
 
-  constructor: (server, container, info_container, width, height, options) ->
+  constructor: (server, container, width, height, options = {}) ->
+    @options = _(options).defaults({})
     @server = server
-    @size = ReversiClient::SIZE
-    @colors = ReversiClient::COLORS
-    @container = $(container)
-    @info_container = $(info_container)
+    @size = @SIZE
+    @colors = @COLORS
     @width = width
     @height = height
-    @paper = Raphael(@container.get(0), width, height)
-    @options = _(options or {}).defaults({})
+    @paper = Raphael(container, width, height)
     @state = "idle"
     @events = $(new Object())
     @paper_set = @paper.set()
@@ -133,14 +132,14 @@ class exports.ReversiClient
   getOtherPlayer: (player) ->
     if player == "black" then "white" else "black"
 
-  update: (state) ->
-    @draw(state)
+  update: (state, flipped_pieces) ->
+    @draw(state, flipped_pieces)
     @updateGameInfo(state)
     if not state.player_turn
       @events.trigger("finished")
       @state = "idle"
 
-  draw: (state) ->
+  draw: (state, flipped_pieces = []) ->
     @paper_set.remove()
     @paper_set = @paper.set()
     squares = flatten(@draw_board(state.player_turn, state.player_moves))    
@@ -148,7 +147,7 @@ class exports.ReversiClient
     
     for player in ["black", "white"]
       for pos in state.pieces[player]
-        was_flipped = _(state.flipped_pieces || []).containsObject(pos)
+        was_flipped = _(flipped_pieces || []).containsObject(pos)
         piece = @draw_piece(player, pos, was_flipped)
         @paper_set.push(piece)
       
@@ -171,7 +170,8 @@ class exports.ReversiClient
             rect.mouseout =>
               rect.attr(fill: square_with_move_color)
             rect.mousedown =>
-              @update(@server.move([x, y]))
+              res = @server.move([x, y])
+              @update(res.new_state, res.flipped_pieces)
         rect
 
   draw_piece: (player, [x, y], flip_effect) ->
@@ -190,22 +190,15 @@ class exports.ReversiClient
     piece
 
   updateGameInfo: (state) ->
-    state = @server.getCurrentState()
-    turn_info = (if state.player_turn then "Turn: <b>#{state.player_turn}</b>" else "Finished")
-    @info_container.html("""
-      #{turn_info}.
-      Black: <b>#{state.pieces.black.length}</b> -
-      White: <b>#{state.pieces.white.length}</b>""")
+    @events.trigger("move", @server.getCurrentState())
 
   start: ->
     @state = "playing"
-    server_state = @server.init()
-    @draw(server_state)
+    @draw(@server.init())
 
   abort: ->
     @server.init()
     @state = "idle"
-    @info_container.html("")
     @paper.clear()
     @paper_set = @paper.set()
 

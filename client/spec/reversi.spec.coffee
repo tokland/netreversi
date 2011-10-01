@@ -1,7 +1,5 @@
 should = require 'should'
 helper = require 'helper'
-require 'underscore'
-require 'underscore_extensions'
 game = require 'reversi'
 
 describe "ReversiEngine", ->
@@ -153,7 +151,6 @@ describe "ReversiEngine", ->
           black: [[1, 1], [1, 2]]
           white: [[2, 2]]
         player_turn: "black"
-        finished: false
         player_moves: [[3, 2], [3, 3]]
       
   describe "move", ->

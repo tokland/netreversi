@@ -1,4 +1,6 @@
 game = require '../reversi'
+_ = require 'underscore_extensions'
+#_.mixin(require('../underscore_extensions'))
 
 exports.createEngine = (string_board) ->
   new game.ReversiEngine({start_pieces: string_board && toPieces(string_board)})
@@ -11,4 +13,3 @@ toPieces = (string_board) ->
         {player: {X: "black", O: "white"}[piece], pos: [x, y]}
   _(matrix).chain().flatten().compact().groupBy((x) -> x.player).
     mash((array, player) -> [player, _(array).pluck("pos")]).value()
-
