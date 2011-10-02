@@ -10,10 +10,11 @@ _(["map", "merge", "zip", "takeWhile", "last", "reject", "mash",
 
 class exports.ReversiEngine
   SIZE: 8
+  
   START_PIECES:
     black: [[3, 4], [4, 3]]
     white: [[3, 3], [4, 4]]
-
+    
   AXIS_INCREMENTS: [
     [+0, +1], [+0, -1], # Y-axis
     [+1, +0], [-1, +0], # X-axis

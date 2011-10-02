@@ -23,4 +23,4 @@ $ ->
       when "playing"
         client.start()
 
-  client.start()        
+  client.start()

@@ -19,8 +19,11 @@ describe "ReversiEngine", ->
   describe "getOtherPlayer", ->
     it "turns black to white, and everything to black", -> 
       engine = helper.createEngine()
-      engine.getOtherPlayer(null).should.equal "black"
       engine.getOtherPlayer("black").should.equal "white"
+
+    it "turns anything to black", -> 
+      engine = helper.createEngine()
+      engine.getOtherPlayer(null).should.equal "black"
       engine.getOtherPlayer("white").should.equal "black"
 
   describe "processNextTurn", ->
@@ -44,7 +47,7 @@ describe "ReversiEngine", ->
       engine.getCurrentState().player_turn.should.equal "white"
 
   describe "canPlayerMove", ->
-    it -> 
+    it "player can move if it has at least one valid move", -> 
       engine1 = helper.createEngine("""
          01234567
         0--------
@@ -68,11 +71,11 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine2.canPlayerMove(engine1.getCurrentState().pieces, "black").should.be.true
-      engine2.canPlayerMove(engine1.getCurrentState().pieces, "white").should.be.false    
+      engine2.canPlayerMove(engine2.getCurrentState().pieces, "black").should.be.true
+      engine2.canPlayerMove(engine2.getCurrentState().pieces, "white").should.be.false    
     
   describe "validMovesForPlayer", ->
-    it -> 
+    it "player can move to empty square immediate to oponent's pieces", -> 
       engine1 = helper.createEngine("""
          01234567
         0--------
@@ -104,7 +107,7 @@ describe "ReversiEngine", ->
         should.eql([[2, 3], [2, 4], [3, 2], [3, 6]])
 
   describe "flippedPiecesOnMove", ->
-    it -> 
+    it "flips pieces between the move and the first piece of the turn player", -> 
       engine1 = helper.createEngine("""
          01234567
         0--------
@@ -115,9 +118,10 @@ describe "ReversiEngine", ->
         5--------
         6--------
         7--------""")
-      engine1.flippedPiecesOnMove(engine1.pieces, "black", [5, 2]).should.be.empty
-      engine1.flippedPiecesOnMove(engine1.pieces, "black", [4, 2]).should.eql([[4, 3]])
-      engine1.flippedPiecesOnMove(engine1.pieces, "white", [2, 3]).should.eql([[3, 3]])
+      pieces = engine1.getCurrentState().pieces
+      engine1.flippedPiecesOnMove(pieces, "black", [5, 2]).should.be.empty
+      engine1.flippedPiecesOnMove(pieces, "black", [4, 2]).should.eql([[4, 3]])
+      engine1.flippedPiecesOnMove(pieces, "white", [2, 3]).should.eql([[3, 3]])
         
       engine2 = helper.createEngine("""
          01234567
@@ -129,9 +133,10 @@ describe "ReversiEngine", ->
         5-----X--
         6--------
         7--------""")
-      engine2.flippedPiecesOnMove(engine2.pieces, "black", [5, 3]).
+      pieces = engine2.getCurrentState().pieces
+      engine2.flippedPiecesOnMove(pieces, "black", [5, 3]).
         should.eql([[5, 4], [5, 2], [6, 3], [4, 3]])
-      engine1.flippedPiecesOnMove(engine1.pieces, "white", [2, 3]).
+      engine1.flippedPiecesOnMove(pieces, "white", [2, 3]).
         should.eql([[3, 3]])
  
   describe "getCurrentState", ->
@@ -154,7 +159,7 @@ describe "ReversiEngine", ->
         player_moves: [[3, 2], [3, 3]]
       
   describe "move", ->
-    it -> 
+    it "puts a piece in the board and return new_state and flipped_pieces", -> 
       engine1 = helper.createEngine("""
          01234567
         0--------
@@ -166,11 +171,12 @@ describe "ReversiEngine", ->
         6--------
         7--------""")
       engine1.move([4, 2]).should.eql
-        pieces:
-          black: [[3, 3], [4, 4], [4, 2], [4, 3]]
-          white: [[3, 4]]
-        player_turn: "white"
-        player_moves: [[3, 2], [5, 2], [5, 4]]
+        new_state:
+          pieces:
+            black: [[3, 3], [4, 4], [4, 2], [4, 3]]
+            white: [[3, 4]]
+          player_turn: "white"
+          player_moves: [[3, 2], [5, 2], [5, 4]]
         flipped_pieces: [[4,3]]
 
       engine2 = helper.createEngine("""
@@ -184,9 +190,10 @@ describe "ReversiEngine", ->
         6--------
         7--------""")
       engine2.move([4, 3]).should.eql
-        pieces:
-          black: [[1, 3], [4, 3],[3, 3], [2, 3]]
-          white: [[1, 1]]
-        player_turn: null
-        player_moves: []
+        new_state:
+          pieces:
+            black: [[1, 3], [4, 3],[3, 3], [2, 3]]
+            white: [[1, 1]]
+          player_turn: null
+          player_moves: []
         flipped_pieces: [[3, 3], [2, 3]]
