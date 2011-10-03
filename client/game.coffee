@@ -1,10 +1,12 @@
-$ ->  
-  window.server = new ReversiEngine()
-  window.client = new ReversiClient(server, $("#game_container")[0], 400, 400)
+$ = require 'jquery'
+
+$ ->
+  exports.server = new ReversiEngine()
+  exports.client = new ReversiClient(server, "game_container", 400, 400)
   button = $("#game_button")
   button.html("Restart Game")
   
-  client.bind "finished", ->
+  client.bind "finished", (ev, state) ->
     button.html("Start Game")
 
   client.bind "move", (ev, state) ->

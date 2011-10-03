@@ -3,7 +3,9 @@
   <title>Net reversi</title>
   <script src="jquery.js"></script>
   <script src="underscore.js"></script>
-  <script src="underscore_extensions.js"></script>  
+  <script src="browserify.js"></script>
+  <script>browserify({"jquery": $, "underscore": _, "underscore_extensions": _});</script>
+  <script src="underscore_extensions.js"></script>
   <script src="raphael.js"></script>
   <script src="reversi.js"></script>
   <script src="game.js"></script>

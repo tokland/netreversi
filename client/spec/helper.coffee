@@ -2,7 +2,7 @@ game = require '../reversi'
 _ = require 'underscore_extensions'
 
 exports.createEngine = (string_board) ->
-  new game.ReversiEngine({start_pieces: string_board && toPieces(string_board)})
+  new game.ReversiEngine(start_pieces: string_board && toPieces(string_board))
   
 toPieces = (string_board) ->
   lines = string_board.replace(/[^-XO\n]/g, '').split("\n")
