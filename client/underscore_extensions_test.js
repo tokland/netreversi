@@ -1,7 +1,5 @@
 #!/usr/bin/node
-
-_ = require('underscore')
-_.mixin(require('underscore_extensions'))
+_ = require('underscore_extensions')
 assert = require('assert');
 
 assert.deepEqual(_.merge(), {});
@@ -32,6 +30,9 @@ assert.deepEqual(_.repeat("b", 3), ["b", "b", "b"]);
 assert.deepEqual(_.flatten1([]), []);
 assert.deepEqual(_.flatten1([[1, 2], [3, 4]]), [1, 2, 3, 4]);
 assert.deepEqual(_.flatten1([[1, 2], [[3, 4], 5]]), [1, 2, [3, 4], 5]);
+
+assert.deepEqual(_({a: 1, b: 2, c: 3}).slice(["a", "c"]), {a: 1, c: 3});
+assert.deepEqual(_({a: 1, b: 2, c: 3}).slice(["d"]), {});
 
 assert.ok(!_([]).isNotEmpty())
 assert.ok(_([1]).isNotEmpty())

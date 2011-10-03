@@ -1,6 +1,4 @@
-if (typeof(module) == "object") {
-  module.exports = _ = require('underscore');
-}
+module.exports = _ = require('underscore');
 
 _.mixin({
   /* Return a new object with the merged properties of all objects in arguments */
@@ -13,7 +11,7 @@ _.mixin({
 
   /* Build an object with [key, value] from pair list or callback */
   mash: function(list, callback, context) {   
-   var pair_callback = callback || _.identity;
+    var pair_callback = callback || _.identity;
     return _.reduce(list, function(obj, value, index, list) {
       var pair = pair_callback.call(context, value, index, list);
       if (typeof pair == "object" && pair.length == 2) {
@@ -65,6 +63,15 @@ _.mixin({
       }
     });
     return output;
+  },
+  
+  /* Return copy of object containing only given keys */
+  slice: function(object, keys) {
+    return _.reduce(_(object).keys(), function(obj, key) {
+      if (_.include(keys, key)) 
+        obj[key] = object[key];
+      return obj;
+    }, {});
   },
 
   /* Like _.uniq but using a custom comparison function */
