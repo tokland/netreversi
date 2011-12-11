@@ -188,7 +188,6 @@
     };
 
     return ReversiEngine;
-
   })();
 
   ReversiSocketIOServer = (function() {
@@ -196,7 +195,6 @@
     function ReversiSocketIOServer() {}
 
     return ReversiSocketIOServer;
-
   })();
 
   exports.ReversiClient = (function() {
@@ -280,8 +278,8 @@
       _results = [];
       for (x = 0, _ref2 = this.size; 0 <= _ref2 ? x < _ref2 : x > _ref2; 0 <= _ref2 ? x++ : x--) {
         _results.push((function() {
-          var _ref3, _results2;
-          var ;
+          var _ref3, _results2,
+            _this = this;
           _results2 = [];
           for (y = 0, _ref3 = this.size; 0 <= _ref3 ? y < _ref3 : y > _ref3; 0 <= _ref3 ? y++ : y--) {
             with_move = _(hoverable_squares).containsObject([x, y]);
@@ -324,8 +322,8 @@
     };
 
     ReversiClient.prototype.draw_piece = function(player, _arg, flip_effect) {
-      var attr, color, other_player, paper_x, paper_y, piece, rx, ry, step_x, step_y, x, y, _ref, _ref2, _ref3;
-      var _this = this;
+      var attr, color, other_player, paper_x, paper_y, piece, rx, ry, step_x, step_y, x, y, _ref, _ref2, _ref3,
+        _this = this;
       x = _arg[0], y = _arg[1];
       _ref = [this.width / this.size, this.height / this.size], step_x = _ref[0], step_y = _ref[1];
       _ref2 = [(x * step_x) + (step_x / 2), (y * step_y) + (step_y / 2)], paper_x = _ref2[0], paper_y = _ref2[1];
@@ -359,7 +357,5 @@
     };
 
     return ReversiClient;
-
   })();
-
 }).call(this);
