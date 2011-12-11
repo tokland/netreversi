@@ -1,6 +1,11 @@
 module.exports = _ = require('underscore');
 
 _.mixin({
+  /* Like extend but get key/values object->key_names */ 
+  extend_from: function(object, source_object, key_names) {   
+    return _(object).extend(_(source_object).slice(key_names));
+  },
+  
   /* Return a new object with the merged properties of all objects in arguments */
   merge: function() {
     var objects = arguments;
@@ -19,6 +24,13 @@ _.mixin({
       }
       return obj;
     }, {});
+  },
+
+  /* Return pairs [key, value] of object */
+  pairs: function(object) {   
+    return _.map(object, function(value, key) {
+      return [key, value];
+    });
   },
 
   /* take elements from list while callback condition is met */
@@ -69,6 +81,15 @@ _.mixin({
   slice: function(object, keys) {
     return _.reduce(_(object).keys(), function(obj, key) {
       if (_.include(keys, key)) 
+        obj[key] = object[key];
+      return obj;
+    }, {});
+  },
+
+  /* Return copy of object without given keys */
+  except: function(object, keys) {
+    return _.reduce(_(object).keys(), function(obj, key) {
+      if (!_.include(keys, key)) 
         obj[key] = object[key];
       return obj;
     }, {});

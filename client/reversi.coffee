@@ -1,6 +1,16 @@
 _ = require 'underscore_extensions'
-_.extend(global, _.slice(_, ["map", "zip", "flatten", "takeWhile", "mash"]))
+_(global).extend_from(_, ["map", "mash", "zip", "flatten", "takeWhile"])
 
+# ReversiEngine.
+#
+# State object:
+#
+#   pieces: 
+#     black: [(x, y)]
+#     white: [(x, y)]
+#   player_turn: 'black' | 'white' | null
+#   player_moves:[(x, y)]
+# 
 class exports.ReversiEngine
   SIZE: 8
   
@@ -53,7 +63,7 @@ class exports.ReversiEngine
         [last_x, last_y] = _(cs).last()
         if pos2player[[last_x+dx, last_y+dy]] == player
           {squares: cs, pos: [x, y]}
-
+    
   validMovesForPlayer: (pieces, player) ->
     return [] unless player
     pos2player = @getPositionToPlayer(pieces, player)
@@ -67,7 +77,7 @@ class exports.ReversiEngine
     return [] unless player
     pos2player = @getPositionToPlayer(pieces, player)
     squares = @traverseSquares(player, pos, pos2player)
-    _(squares).chain().compact().pluck("squares").flatten1().uniqWith(_.isEqual).value()
+    _(squares).chain().compact().pluck("squares").flatten1().value()
 
   setNewState: (new_state) ->
     @state = new_state
@@ -77,11 +87,16 @@ class exports.ReversiEngine
   getCurrentState: ->
     @state
 
+  # Initialize the engine (first turn: black)
   init: ->
     @setNewState @getStateNextTurn
       pieces: @options.start_pieces
       player_turn: null
     
+  # Set piece for current player in position [x, y] and return object containing:
+  # 
+  #   new_state: ...
+  #   flipped_pieces: [(x, y)]
   move: (pos) ->
     player = @state.player_turn
     player2 = @getOtherPlayer(player)
@@ -118,9 +133,9 @@ class exports.ReversiClient
     @width = width
     @height = height
     @paper = Raphael(container, width, height)
-    @state = "idle"
     @events = $(new Object())
     @paper_set = @paper.set()
+    @state = "idle"
 
   getOtherPlayer: (player) ->
     if player == "black" then "white" else "black"
@@ -135,12 +150,12 @@ class exports.ReversiClient
   draw: (state, flipped_pieces) ->
     @paper_set.remove()
     @paper_set = @paper.set()
-    squares = flatten(@draw_board(state.player_turn, state.player_moves))    
-    @paper_set.push.apply(@paper_set, squares)
+    squares = @draw_board(state.player_turn, state.player_moves)
+    @paper_set.push.apply(@paper_set, flatten(squares))
     
     for player in ["black", "white"]
       for pos in state.pieces[player]
-        was_flipped = _(flipped_pieces || []).containsObject(pos)
+        was_flipped = _(flipped_pieces).containsObject(pos)
         piece = @draw_piece(player, pos, was_flipped)
         @paper_set.push(piece)
       
@@ -182,12 +197,6 @@ class exports.ReversiClient
   start: ->
     @state = "playing"
     @update(@server.init(), [])
-
-  abort: ->
-    @server.init()
-    @state = "idle"
-    @paper.clear()
-    @paper_set = @paper.set()
 
   bind: (name, callback) ->
     @events.bind(name, _.bind(callback, this))

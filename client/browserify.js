@@ -12,6 +12,6 @@ function require(module) {
   if (obj) {
     return obj;
   } else {
-    alert("[browserify:require] unknown module was required: " + module);
+    alert("[browserify::require] unknown module: " + module);
   }
 }
